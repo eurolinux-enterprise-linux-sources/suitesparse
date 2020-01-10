@@ -1,6 +1,6 @@
 Name:           suitesparse
 Version:        3.4.0
-Release:        8%{?dist}
+Release:        9%{?dist}
 Summary:        A collection of sparse matrix libraries
 
 Group:          System Environment/Libraries
@@ -337,7 +337,7 @@ pushd Lib
   done
 popd
 pushd Include
-  for f in *.h;  do
+  for f in *.h *.hpp;  do
     cp -a $f ${RPM_BUILD_ROOT}%{_includedir}/%{name}/$f
   done
 popd
@@ -386,6 +386,9 @@ rm -rf ${RPM_BUILD_ROOT}
 %doc Doc/*
 
 %changelog
+* Mon Mar 10 2014 Tomas Tomecek <ttomecek@redhat.com> - 3.4.0-9
+- package *.hpp header files
+
 * Tue Jun 11 2013 Tomas Tomecek <ttomecek@redhat.com> - 3.4.0-8
 - Add licenses to subpackages
 - Clean whitespace in spec file
