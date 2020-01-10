@@ -1,0 +1,69 @@
+--- UFconfig/UFconfig.mk	2008-09-22 14:19:37.000000000 -0400
++++ UFconfig/UFconfig.mk.new	2008-12-20 21:18:19.000000000 -0500
+@@ -48,7 +48,7 @@
+ MV = mv -f
+ 
+ # Fortran compiler (not normally required)
+-F77 = f77
++F77 = gfortran
+ F77FLAGS = -O
+ F77LIB =
+ 
+@@ -89,13 +89,17 @@
+ # BLAS = -lgoto -lgfortran -lgfortranbegin -lg2c
+ 
+ # This is probably slow ... it might connect to the Standard Reference BLAS:
+-BLAS = -lblas -lgfortran -lgfortranbegin -lg2c
+-LAPACK = -llapack
++#BLAS = -lblas -lgfortran -lgfortranbegin -lg2c
++#LAPACK = -llapack
+ 
+ # Using non-optimized versions:
+ # BLAS = -lblas_plain -lgfortran -lgfortranbegin -lg2c
+ # LAPACK = -llapack_plain
+ 
++# Using ATLAS optimized BLAS and Lapack: Distribution specific addition
++BLAS = -lcblas 
++LAPACK = -lclapack
++
+ # The BLAS might not contain xerbla, an error-handling routine for LAPACK and
+ # the BLAS.  Also, the standard xerbla requires the Fortran I/O library, and
+ # stops the application program if an error occurs.  A C version of xerbla
+@@ -146,7 +150,7 @@
+ # -DNRECIPROCAL	do not multiply by the reciprocal
+ # -DNO_DIVIDE_BY_ZERO	do not divide by zero
+ 
+-UMFPACK_CONFIG = 
++UMFPACK_CONFIG = -DNPARTITION
+ 
+ #------------------------------------------------------------------------------
+ # CHOLMOD configuration
+@@ -184,7 +188,7 @@
+ # -DNSUNPERF	    for Solaris only.  If defined, do not use the Sun
+ #			Performance Library
+ 
+-CHOLMOD_CONFIG =
++CHOLMOD_CONFIG = -DNPARTITION
+ 
+ #------------------------------------------------------------------------------
+ # SuiteSparseQR configuration:
+@@ -198,7 +202,7 @@
+ # -DHAVE_TBB        enable the use of Intel's Threading Building Blocks (TBB)
+ 
+ # default, without timing, without TBB:
+-SPQR_CONFIG =
++SPQR_CONFIG = -DNPARTITION
+ # with timing and TBB:
+ # SPQR_CONFIG = -DTIMING -DHAVE_TBB
+ # with timing
+@@ -263,6 +267,10 @@
+ # F77 = gfortran
+ # BLAS = -lgoto -lgfortran
+ 
++# Distribution specific, with ATLAS Blas
++F77 = gfortran
++BLAS = -lf77blas -lgfortran
++
+ #------------------------------------------------------------------------------
+ # Solaris
+ #------------------------------------------------------------------------------

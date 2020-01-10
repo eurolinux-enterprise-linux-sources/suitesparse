@@ -1,0 +1,507 @@
+--- SuiteSparse.orig/KLU/Tcov/Makefile	2007-10-28 02:50:07.000000000 +0100
++++ SuiteSparse/KLU/Tcov/Makefile	2012-11-26 14:10:01.208666298 +0100
+@@ -19,12 +19,14 @@
+ LIB = ../../AMD/Lib/libamd.a ../../COLAMD/Lib/libcolamd.a \
+     ../../CHOLMOD/Lib/libcholmod.a \
+     ../../CAMD/Lib/libcamd.a ../../CCOLAMD/Lib/libccolamd.a \
+-    ../../metis-4.0/libmetis.a \
+     -lm
++    #../../metis-4.0/libmetis.a \
++    #-lm
+ 
+ I = -I../../UFconfig -I../../AMD/Include -I../../COLAMD/Include \
+     -I../../BTF/Include -I../../CHOLMOD/Include -I../../CAMD/Include \
+-    -I../../CCOLAMD/Include -I../../metis-4.0/Lib -I../Include -I../User
++    -I../../CCOLAMD/Include -I../Include -I../User
++    #-I../../CCOLAMD/Include -I../../metis-4.0/Lib -I../Include -I../User
+ 
+ PRETTY = grep -v "^\#" | indent -bl -nce -ss -bli0 -i4 -sob 
+ 
+@@ -43,7 +45,7 @@
+ 	( cd ../../COLAMD ; $(MAKE) library )
+ 	( cd ../../CAMD ; $(MAKE) library )
+ 	( cd ../../CCOLAMD ; $(MAKE) library )
+-	( cd ../../metis-4.0 ; $(MAKE) )
++#	( cd ../../metis-4.0 ; $(MAKE) )
+ 	( cd ../../CHOLMOD ; $(MAKE) library )
+ 
+ purge: distclean
+--- SuiteSparse.orig/SPQR/Tcov/Makefile	2008-09-23 16:54:09.000000000 +0200
++++ SuiteSparse/SPQR/Tcov/Makefile	2012-11-26 14:36:53.276701207 +0100
+@@ -29,7 +29,12 @@
+ # Use the standard reference BLAS, and LAPACK, both compiled with -g,
+ # for best diagnostics.  Also, some BLAS (such as the Goto BLAS) cause
+ # problems for Valgrind (using instructions that Valgrind doesn't understand).
+-FLIB = -lgfortran -llapack_plain -lblas_plain -lg2c
++#FLIB = -lgfortran -llapack_plain -lblas_plain -lg2c
++LIBDIR_x86_64 = /usr/lib64
++LIBDIR_i686 = /usr/lib
++MACHINE = $(shell uname -m)
++ATLAS = -L$(LIBDIR_$(MACHINE))/atlas
++FLIB = $(ATLAS) -lgfortran -llapack -lcblas
+ 
+ # This can be used, but severe valgrind failures may occur in the BLAS,
+ # because of how the BLAS is optimized:
+--- SuiteSparse.orig/UFconfig/UFconfig.mk	2012-11-26 15:42:28.207676533 +0100
++++ SuiteSparse/UFconfig/UFconfig.mk	2012-11-26 16:27:15.482510447 +0100
+@@ -126,13 +126,13 @@
+ # The path is relative to where it is used, in CHOLMOD/Lib, CHOLMOD/MATLAB, etc.
+ # You may wish to use an absolute path.  METIS is optional.  Compile
+ # CHOLMOD with -DNPARTITION if you do not wish to use METIS.
+-METIS_PATH = ../../metis-4.0
+-METIS = ../../metis-4.0/libmetis.a
++#METIS_PATH = ../../metis-4.0
++#METIS = ../../metis-4.0/libmetis.a
+ 
+ # If you use CHOLMOD_CONFIG = -DNPARTITION then you must use the following
+ # options:
+-# METIS_PATH =
+-# METIS =
++METIS_PATH =
++METIS =
+ 
+ #------------------------------------------------------------------------------
+ # UMFPACK configuration:
+--- SuiteSparse.orig/CHOLMOD/Tcov/null.c	2008-07-29 22:01:01.000000000 +0200
++++ SuiteSparse/CHOLMOD/Tcov/null.c	2012-11-26 17:05:59.537518759 +0100
+@@ -157,7 +157,7 @@
+     ok = CHOLMOD(rowcolcounts)(A, fset, fsize, Parent, Post,
+ 	RowCount, ColCount, First, Level, cn) ;			NOT (ok) ;
+     ok = CHOLMOD(amd)(A, fset, fsize, Perm, cn) ;		NOT (ok) ;
+-    ok = CHOLMOD(camd)(A, fset, fsize, Constraints, Perm, cn) ;	NOT (ok) ;
++    //ok = CHOLMOD(camd)(A, fset, fsize, Constraints, Perm, cn) ;	NOT (ok) ;
+     ok = CHOLMOD(colamd)(A, fset, fsize, postorder, Perm, cn) ;	NOT (ok) ;
+     ok = CHOLMOD(rowfac)(A, F, beta, kstart, kend, L, cn) ;	NOT (ok) ;
+     ok = CHOLMOD(row_subtree)(A, F, krow, Parent, R, cn) ;	NOT (ok) ;
+--- SuiteSparse.orig/UMFPACK/Tcov/GNUmakefile.di	2006-05-02 15:51:37.000000000 +0200
++++ SuiteSparse/UMFPACK/Tcov/GNUmakefile.di	2012-11-26 17:54:51.246424845 +0100
+@@ -9,7 +9,9 @@
+ run: prog
+ 	- ./ut > ut.out
+ 	- tail ut.out
+-	#- $(RM) ut.out
++	- tail ut.out > ut2.out
++	- $(RM) ut.out
++	- mv ut2.out ut.out
+ 
+ prog:
+ 	( cd UMFPACK ; make library )
+--- SuiteSparse.orig/UMFPACK/Tcov/GNUmakefile.dl	2006-05-02 15:51:40.000000000 +0200
++++ SuiteSparse/UMFPACK/Tcov/GNUmakefile.dl	2012-11-26 18:01:19.055430298 +0100
+@@ -9,7 +9,10 @@
+ run: prog
+ 	- ./ut > ut.out
+ 	- tail ut.out
+-	#- $(RM) ut.out
++	- tail ut.out > ut2.out
++	- $(RM) ut.out
++	- mv ut2.out ut.out
++
+ 
+ prog:
+ 	( cd UMFPACK ; make library )
+--- SuiteSparse.orig/UMFPACK/Tcov/GNUmakefile.zi	2006-05-02 15:51:42.000000000 +0200
++++ SuiteSparse/UMFPACK/Tcov/GNUmakefile.zi	2012-11-26 17:56:18.680522951 +0100
+@@ -9,7 +9,9 @@
+ run: prog
+ 	- ./ut > ut.out
+ 	- tail ut.out
+-	#- $(RM) ut.out
++	- tail ut.out > ut2.out
++	- $(RM) ut.out
++	- mv ut2.out ut.out
+ 
+ prog:
+ 	( cd UMFPACK ; make library )
+--- SuiteSparse.orig/UMFPACK/Tcov/GNUmakefile.zl	2006-05-02 15:51:44.000000000 +0200
++++ SuiteSparse/UMFPACK/Tcov/GNUmakefile.zl	2012-11-26 17:56:41.502698106 +0100
+@@ -9,7 +9,9 @@
+ run: prog
+ 	- ./ut > ut.out
+ 	- tail ut.out
+-	#- $(RM) ut.out
++	- tail ut.out > ut2.out
++	- $(RM) ut.out
++	- mv ut2.out ut.out
+ 
+ prog:
+ 	( cd UMFPACK ; make library )
+--- SuiteSparse.orig/Makefile	2008-09-23 17:16:41.000000000 +0200
++++ SuiteSparse/Makefile	2012-11-27 13:50:01.228182332 +0100
+@@ -104,4 +104,5 @@
+ 	( cd KLU ; $(MAKE) cov )
+ 	( cd CHOLMOD ; $(MAKE) cov )
+ 	( cd UMFPACK ; $(MAKE) cov )
++	( cd AMD ; $(MAKE) )
+ 	( cd SPQR ; $(MAKE) cov )
+--- SuiteSparse.orig/CHOLMOD/Tcov/Makefile	2008-09-22 22:24:06.000000000 +0200
++++ SuiteSparse/CHOLMOD/Tcov/Makefile	2012-11-30 14:03:33.803310335 +0100
+@@ -11,7 +11,14 @@
+ # Tcov requires gcc
+ CC = gcc
+ 
+-C = $(CC) $(CFLAGS) $(CHOLMOD_CONFIG) $(NANTESTS)
++LIBDIR_x86_64 = /usr/lib64
++LIBDIR_i686 = /usr/lib
++
++MACHINE = $(shell uname -m)
++
++ATLAS = -L$(LIBDIR_$(MACHINE))/atlas
++
++C = $(CC) $(CFLAGS) $(ATLAS) $(CHOLMOD_CONFIG) $(NANTESTS)
+ 
+ # optimized LAPACK and BLAS
+ # LIB = $(METIS) -lm $(LAPACK) $(BLAS) $(XERBLA)
+@@ -20,7 +27,8 @@
+ # LIB = $(METIS) -lm -llapack_plain -lblas_plain -lg2c
+ # LIB = $(METIS) -lm -llapack_plain -lblas_plain -lgfortran -lgfortranbegin
+ # LIB = $(METIS) -lm -llapack -lblas -lgfortran -lgfortranbegin
+-LIB = $(METIS) -lm -llapack -lblas_plain -lgfortran -lgfortranbegin -lpthread -lg2c
++#LIB = $(METIS) -lm -llapack -lblas_plain -lgfortran -lgfortranbegin -lpthread -lg2c
++LIB = $(METIS) -lm -lcblas -llapack -lgfortran -lgfortranbegin -lpthread
+ 
+ # Solaris
+ # LIB = $(METIS) -xlic_lib=sunperf
+@@ -124,15 +132,17 @@
+ 	z_ccolamd.o \
+ 	z_csymamd.o \
+ 	z_camd.o \
+-	z_metis.o \
+ 	z_nesdis.o
++	#z_metis.o \
++	#z_nesdis.o
+ 
+ LPARTITION_OBJ = \
+ 	l_ccolamd.o \
+ 	l_csymamd.o \
+ 	l_camd.o \
+-	l_metis.o \
+ 	l_nesdis.o
++	#l_metis.o \
++	#l_nesdis.o
+ 
+ CAMDSRC = ../../CAMD/Source/camd_1.c \
+ 	../../CAMD/Source/camd_2.c \
+@@ -352,159 +362,162 @@
+ 	$(V) ./l_demo ../Demo/Matrix/mangle3.mtx    > tmp/ldemo_mangle3.out
+ 	$(V) ./l_demo ../Demo/Matrix/mangle4.mtx    > tmp/ldemo_mangle4.out
+ 	$(V) ./l_demo ../Demo/Matrix/pts5ldd03.mtx  > tmp/ldemo_pts5ldd03.out
+-	- grep resid tmp/demo*
+-	$(V) ./cmread no_such_file                  > tmp/no_such_file.out
+-	$(V) ./cmread Matrix/crud1                  > tmp/crud1.out
+-	$(V) ./cmread Matrix/crud2                  > tmp/crud2.out
+-	$(V) ./cmread Matrix/fullcrud.mtx           > tmp/fullcrud.out
+-	$(V) ./cmread Matrix/fullcrud1.mtx          > tmp/fullcrud1.out
+-	$(V) ./cmread Matrix/fullcrud2.mtx          > tmp/fullcrud2.out
+-	$(V) ./cmread Matrix/3by0.mtx               > tmp/3by0.out
+-	$(V) ./cmread Matrix/fullrza.mtx            > tmp/fullrza.out
+-	$(V) ./cmread Matrix/fullrsa.mtx            > tmp/fullrsa.out
+-	$(V) ./cmread Matrix/fullcsa.mtx            > tmp/fullcsa.out
+-	$(V) ./cmread Matrix/fullcza.mtx            > tmp/fullcza.out
+-	$(V) ./cmread Matrix/fullcha.mtx            > tmp/fullcha.out
+-	$(V) ./cmread Matrix/cha.mtx		       > tmp/cha.out
+-	$(V) ./cmread Matrix/cza.mtx		       > tmp/cza.out
+-	$(V) ./cmread Matrix/csa.mtx		       > tmp/csa.out
+-	$(V) ./cmread Matrix/one                    > tmp/one.out
+-	$(V) ./cmread Matrix/rza.mtx                > tmp/rza.out
+-	$(V) ./cmread ../Demo/Matrix/mangle5.tri    > tmp/mangle5.out
+-	$(V) ./cmread ../Demo/Matrix/mangle6.tri    > tmp/mangle6.out
+-	$(V) ./cmread ../Demo/Matrix/mangle7.tri    > tmp/mangle6.out
+-	$(V) ./cmread ../Demo/Matrix/mangle8.tri    > tmp/mangle8.out
+-	$(V) ./cmread ../Demo/Matrix/empty.tri      > tmp/empty.out
+-	$(V) ./cmread ../Demo/Matrix/one.tri        > tmp/one.out
+-	$(V) ./cmread Matrix/plskz362.mtx           > tmp/plskz363.out
+-	$(V) ./cmread Matrix/2diag.tri	       > tmp/2diag.out
++	- grep resid tmp/demo* tmp/ldemo*
++	- rm -f tmp/demo* tmp/ldemo*
++	$(V) ./cmread no_such_file                  > /dev/null
++	$(V) ./cmread Matrix/crud1                  > /dev/null
++	$(V) ./cmread Matrix/crud2                  > /dev/null
++	$(V) ./cmread Matrix/fullcrud.mtx           > /dev/null
++	$(V) ./cmread Matrix/fullcrud1.mtx          > /dev/null
++	$(V) ./cmread Matrix/fullcrud2.mtx          > /dev/null
++	$(V) ./cmread Matrix/3by0.mtx               > /dev/null
++	$(V) ./cmread Matrix/fullrza.mtx            > /dev/null
++	$(V) ./cmread Matrix/fullrsa.mtx            > /dev/null
++	$(V) ./cmread Matrix/fullcsa.mtx            > /dev/null
++	$(V) ./cmread Matrix/fullcza.mtx            > /dev/null
++	$(V) ./cmread Matrix/fullcha.mtx            > /dev/null
++	$(V) ./cmread Matrix/cha.mtx		       > /dev/null
++	$(V) ./cmread Matrix/cza.mtx		       > /dev/null
++	$(V) ./cmread Matrix/csa.mtx		       > /dev/null
++	$(V) ./cmread Matrix/one                    > /dev/null
++	$(V) ./cmread Matrix/rza.mtx                > /dev/null
++	$(V) ./cmread ../Demo/Matrix/mangle5.tri    > /dev/null
++	$(V) ./cmread ../Demo/Matrix/mangle6.tri    > /dev/null
++	$(V) ./cmread ../Demo/Matrix/mangle7.tri    > /dev/null
++	$(V) ./cmread ../Demo/Matrix/mangle8.tri    > /dev/null
++	$(V) ./cmread ../Demo/Matrix/empty.tri      > /dev/null
++	$(V) ./cmread ../Demo/Matrix/one.tri        > /dev/null
++	$(V) ./cmread Matrix/plskz362.mtx           > /dev/null
++	$(V) ./cmread Matrix/2diag.tri	       > /dev/null
+ 	$(V) ./cmread Matrix/r5lo    	       > tmp/r5lo.out
+ 	$(V) ./cmread Matrix/r5lo2    	       > tmp/r5lo2.out
+ 	- diff tmp/r5lo.out tmp/r5lo2.out
+-	$(V) ./cmread Matrix/cs.mtx	               > tmp/cs.out
+-	$(V) ./cmread Matrix/2lo.tri	               > tmp/2lo.out
+-	$(V) ./cmread Matrix/2.tri	               > tmp/2.out
+-	$(V) ./cmread Matrix/2up.tri	               > tmp/2up.out
+-	$(V) ./cmread Matrix/huge.tri	       > tmp/huge.out
+-	$(V) ./cmread Matrix/1e99                   > tmp/1e99.out
+-	$(V) ./clread no_such_file                  > tmp/l_no_such_file.out
+-	$(V) ./clread Matrix/crud1                  > tmp/l_crud1.out
+-	$(V) ./clread Matrix/crud2                  > tmp/l_crud2.out
+-	$(V) ./clread Matrix/fullcrud.mtx           > tmp/l_fullcrud.out
+-	$(V) ./clread Matrix/fullcrud1.mtx          > tmp/l_fullcrud1.out
+-	$(V) ./clread Matrix/fullcrud2.mtx          > tmp/l_fullcrud2.out
+-	$(V) ./clread Matrix/3by0.mtx               > tmp/l_3by0.out
+-	$(V) ./clread Matrix/fullrza.mtx            > tmp/l_fullrza.out
+-	$(V) ./clread Matrix/fullrsa.mtx            > tmp/l_fullrsa.out
+-	$(V) ./clread Matrix/fullcsa.mtx            > tmp/l_fullcsa.out
+-	$(V) ./clread Matrix/fullcza.mtx            > tmp/l_fullcza.out
+-	$(V) ./clread Matrix/fullcha.mtx            > tmp/l_fullcha.out
+-	$(V) ./clread Matrix/cha.mtx		       > tmp/l_cha.out
+-	$(V) ./clread Matrix/cza.mtx		       > tmp/l_cza.out
+-	$(V) ./clread Matrix/csa.mtx		       > tmp/l_csa.out
+-	$(V) ./clread Matrix/one		       > tmp/l_one.out
+-	$(V) ./clread Matrix/rza.mtx                > tmp/l_rza.out
+-	$(V) ./clread ../Demo/Matrix/mangle5.tri    > tmp/l_mangle5.out
+-	$(V) ./clread ../Demo/Matrix/mangle6.tri    > tmp/l_mangle6.out
+-	$(V) ./clread ../Demo/Matrix/mangle7.tri    > tmp/l_mangle6.out
+-	$(V) ./clread ../Demo/Matrix/mangle8.tri    > tmp/l_mangle8.out
+-	$(V) ./clread ../Demo/Matrix/empty.tri      > tmp/l_empty.out
+-	$(V) ./clread ../Demo/Matrix/one.tri        > tmp/l_one.out
+-	$(V) ./clread Matrix/plskz362.mtx           > tmp/l_plskz363.out
+-	$(V) ./clread Matrix/2diag.tri	       > tmp/l_2diag.out
++	- rm -f tmp/*.out
++	$(V) ./cmread Matrix/cs.mtx	               > /dev/null
++	$(V) ./cmread Matrix/2lo.tri	               > /dev/null
++	$(V) ./cmread Matrix/2.tri	               > /dev/null
++	$(V) ./cmread Matrix/2up.tri	               > /dev/null
++	$(V) ./cmread Matrix/huge.tri	       > /dev/null
++	$(V) ./cmread Matrix/1e99                   > /dev/null
++	$(V) ./clread no_such_file                  > /dev/null
++	$(V) ./clread Matrix/crud1                  > /dev/null
++	$(V) ./clread Matrix/crud2                  > /dev/null
++	$(V) ./clread Matrix/fullcrud.mtx           > /dev/null
++	$(V) ./clread Matrix/fullcrud1.mtx          > /dev/null
++	$(V) ./clread Matrix/fullcrud2.mtx          > /dev/null
++	$(V) ./clread Matrix/3by0.mtx               > /dev/null
++	$(V) ./clread Matrix/fullrza.mtx            > /dev/null
++	$(V) ./clread Matrix/fullrsa.mtx            > /dev/null
++	$(V) ./clread Matrix/fullcsa.mtx            > /dev/null
++	$(V) ./clread Matrix/fullcza.mtx            > /dev/null
++	$(V) ./clread Matrix/fullcha.mtx            > /dev/null
++	$(V) ./clread Matrix/cha.mtx		       > /dev/null
++	$(V) ./clread Matrix/cza.mtx		       > /dev/null
++	$(V) ./clread Matrix/csa.mtx		       > /dev/null
++	$(V) ./clread Matrix/one		       > /dev/null
++	$(V) ./clread Matrix/rza.mtx                > /dev/null
++	$(V) ./clread ../Demo/Matrix/mangle5.tri    > /dev/null
++	$(V) ./clread ../Demo/Matrix/mangle6.tri    > /dev/null
++	$(V) ./clread ../Demo/Matrix/mangle7.tri    > /dev/null
++	$(V) ./clread ../Demo/Matrix/mangle8.tri    > /dev/null
++	$(V) ./clread ../Demo/Matrix/empty.tri      > /dev/null
++	$(V) ./clread ../Demo/Matrix/one.tri        > /dev/null
++	$(V) ./clread Matrix/plskz362.mtx           > /dev/null
++	$(V) ./clread Matrix/2diag.tri	       > /dev/null
+ 	$(V) ./clread Matrix/r5lo    	       > tmp/l_r5lo.out
+ 	$(V) ./clread Matrix/r5lo2    	       > tmp/l_r5lo2.out
+-	- diff tmp/r5lo.out tmp/r5lo2.out
+-	$(V) ./clread Matrix/cs.mtx	               > tmp/l_cs.out
+-	$(V) ./clread Matrix/2lo.tri	               > tmp/l_l_2lo.out
+-	$(V) ./clread Matrix/2.tri	               > tmp/l_2.out
+-	$(V) ./clread Matrix/2up.tri	               > tmp/l_2up.out
+-	$(V) ./clread Matrix/huge.tri               > tmp/l_huge.out
+-	$(V) ./clread Matrix/1e99                   > tmp/l_1e99.out
+-	$(V) ./cm    < Matrix/galenet > tmp/galenet.out
+-	$(V) ./cl    < Matrix/galenet > tmp/l_galenet.out
++	- diff tmp/l_r5lo.out tmp/l_r5lo2.out
++	- rm -f tmp/*.out
++	$(V) ./clread Matrix/cs.mtx	               > /dev/null
++	$(V) ./clread Matrix/2lo.tri	               > /dev/null
++	$(V) ./clread Matrix/2.tri	               > /dev/null
++	$(V) ./clread Matrix/2up.tri	               > /dev/null
++	$(V) ./clread Matrix/huge.tri               > /dev/null
++	$(V) ./clread Matrix/1e99                   > /dev/null
++	$(V) ./cm    < Matrix/galenet > /dev/null
++	$(V) ./cl    < Matrix/galenet > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm    < Matrix/5by50   > tmp/5by50.out
+-	$(V) ./cl    < Matrix/5by50   > tmp/l_5by50.out
++	$(V) ./cm    < Matrix/5by50   > /dev/null
++	$(V) ./cl    < Matrix/5by50   > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm    < Matrix/r5lo    > tmp/r5lo.out 
+-	$(V) ./cl    < Matrix/r5lo    > tmp/l_r5lo.out
+-	$(V) ./cm    < Matrix/r5up    > tmp/r5up.out
+-	$(V) ./cl    < Matrix/r5up    > tmp/l_r5up.out
+-	$(V) ./cm    < Matrix/r5up2   > tmp/r5up2.out
+-	$(V) ./cl    < Matrix/r5up2   > tmp/l_r5up2.out
+-	$(V) ./cm    < Matrix/c5up2   > tmp/c5up2.out
+-	$(V) ./cl    < Matrix/c5up2   > tmp/l_c5up2.out
+-	$(V) ./cm    < Matrix/z5up2   > tmp/z5up2.out
+-	$(V) ./cl    < Matrix/z5up2   > tmp/l_z5up2.out
+-	$(V) ./cm -m < Matrix/z5lo    > tmp/z5lo.out
+-	$(V) ./cl -m < Matrix/z5lo    > tmp/l_z5lo.out
+-	$(V) ./cm    < Matrix/ibm32   > tmp/ibm.out
+-	$(V) ./cl    < Matrix/ibm32   > tmp/l_ibm.out
++	$(V) ./cm    < Matrix/r5lo    > /dev/null 
++	$(V) ./cl    < Matrix/r5lo    > /dev/null
++	$(V) ./cm    < Matrix/r5up    > /dev/null
++	$(V) ./cl    < Matrix/r5up    > /dev/null
++	$(V) ./cm    < Matrix/r5up2   > /dev/null
++	$(V) ./cl    < Matrix/r5up2   > /dev/null
++	$(V) ./cm    < Matrix/c5up2   > /dev/null
++	$(V) ./cl    < Matrix/c5up2   > /dev/null
++	$(V) ./cm    < Matrix/z5up2   > /dev/null
++	$(V) ./cl    < Matrix/z5up2   > /dev/null
++	$(V) ./cm -m < Matrix/z5lo    > /dev/null
++	$(V) ./cl -m < Matrix/z5lo    > /dev/null
++	$(V) ./cm    < Matrix/ibm32   > /dev/null
++	$(V) ./cl    < Matrix/ibm32   > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm -m < Matrix/c5lo    > tmp/c5lo.out
+-	$(V) ./cl -m < Matrix/c5lo    > tmp/l_c5lo.out
+-	$(V) ./cm -m < Matrix/z10     > tmp/z10.out
+-	$(V) ./cl -m < Matrix/z10     > tmp/l_z10.out
+-	$(V) ./cm -m < Matrix/z5up    > tmp/z5up.out
+-	$(V) ./cl -m < Matrix/z5up    > tmp/l_z5up.out
++	$(V) ./cm -m < Matrix/c5lo    > /dev/null
++	$(V) ./cl -m < Matrix/c5lo    > /dev/null
++	$(V) ./cm -m < Matrix/z10     > /dev/null
++	$(V) ./cl -m < Matrix/z10     > /dev/null
++	$(V) ./cm -m < Matrix/z5up    > /dev/null
++	$(V) ./cl -m < Matrix/z5up    > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm -s < Matrix/3singular  > tmp/3singular.out
+-	$(V) ./cl -s < Matrix/3singular  > tmp/l_3singular.out
+-	$(V) ./cm -s < Matrix/z3singular > tmp/z3singular.out
+-	$(V) ./cl -s < Matrix/z3singular > tmp/l_z3singular.out
+-	$(V) ./cm -s < Matrix/c3singular > tmp/c3singular.out
+-	$(V) ./cl -s < Matrix/c3singular > tmp/l_c3singular.out
+-	$(V) ./cm -m < Matrix/0       > tmp/0.out
+-	$(V) ./cl -m < Matrix/0       > tmp/l_0.out
+-	$(V) ./cm -m < Matrix/afiro   > tmp/afiro.out
+-	$(V) ./cl -m < Matrix/afiro   > tmp/l_afiro.out
++	$(V) ./cm -s < Matrix/3singular  > /dev/null
++	$(V) ./cl -s < Matrix/3singular  > /dev/null
++	$(V) ./cm -s < Matrix/z3singular > /dev/null
++	$(V) ./cl -s < Matrix/z3singular > /dev/null
++	$(V) ./cm -s < Matrix/c3singular > /dev/null
++	$(V) ./cl -s < Matrix/c3singular > /dev/null
++	$(V) ./cm -m < Matrix/0       > /dev/null
++	$(V) ./cl -m < Matrix/0       > /dev/null
++	$(V) ./cm -m < Matrix/afiro   > /dev/null
++	$(V) ./cl -m < Matrix/afiro   > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm -m < Matrix/k01up   > tmp/k01up.out
+-	$(V) ./cl -m < Matrix/k01up   > tmp/l_k01up.out
++	$(V) ./cm -m < Matrix/k01up   > /dev/null
++	$(V) ./cl -m < Matrix/k01up   > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm    < Matrix/diag    > tmp/diag.out
+-	$(V) ./cl    < Matrix/diag    > tmp/l_diag.out
+-	$(V) ./cm -m < Matrix/ex5lo   > tmp/ex5lo.out
+-	$(V) ./cl -m < Matrix/ex5lo   > tmp/l_ex5lo.out
++	$(V) ./cm    < Matrix/diag    > /dev/null
++	$(V) ./cl    < Matrix/diag    > /dev/null
++	$(V) ./cm -m < Matrix/ex5lo   > /dev/null
++	$(V) ./cl -m < Matrix/ex5lo   > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm    < Matrix/20lo    > tmp/20lo.out
+-	$(V) ./cl    < Matrix/20lo    > tmp/l_20lo.out
+-	$(V) ./cm    < Matrix/z30lo   > tmp/z30lo.out
+-	$(V) ./cl    < Matrix/z30lo   > tmp/l_z30lo.out
++	$(V) ./cm    < Matrix/20lo    > /dev/null
++	$(V) ./cl    < Matrix/20lo    > /dev/null
++	$(V) ./cm    < Matrix/z30lo   > /dev/null
++	$(V) ./cl    < Matrix/z30lo   > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm -m < Matrix/z30up   > tmp/z30up.out
+-	$(V) ./cl -m < Matrix/z30up   > tmp/l_z30up.out
+-	$(V) ./cm    < Matrix/c10     > tmp/c10.out
+-	$(V) ./cl    < Matrix/c10     > tmp/l_c10.out
+-	$(V) ./cm    < Matrix/c30lo   > tmp/c30lo.out
+-	$(V) ./cl    < Matrix/c30lo   > tmp/l_c30lo.out
++	$(V) ./cm -m < Matrix/z30up   > /dev/null
++	$(V) ./cl -m < Matrix/z30up   > /dev/null
++	$(V) ./cm    < Matrix/c10     > /dev/null
++	$(V) ./cl    < Matrix/c10     > /dev/null
++	$(V) ./cm    < Matrix/c30lo   > /dev/null
++	$(V) ./cl    < Matrix/c30lo   > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm -m < Matrix/c30up   > tmp/c30up.out
+-	$(V) ./cl -m < Matrix/c30up   > tmp/l_c30up.out
+-	$(V) ./cm    < Matrix/pi      > tmp/pi.out
+-	$(V) ./cl    < Matrix/pi      > tmp/l_pi.out
+-	$(V) ./cm    < Matrix/cpi     > tmp/cpi.out
+-	$(V) ./cl    < Matrix/cpi     > tmp/l_cpi.out
+-	$(V) ./cm    < Matrix/1_0     > tmp/1_0.out
+-	$(V) ./cl    < Matrix/1_0     > tmp/l_1_0.out
+-	$(V) ./cm -s < Matrix/3b      > tmp/3b.out
+-	$(V) ./cl -s < Matrix/3b      > tmp/l_3b.out
+-	$(V) ./cm -s < Matrix/cza     > tmp/cza2.out
+-	$(V) ./cl -s < Matrix/cza     > tmp/l_cza2.out
+-	$(V) ./cm    < Matrix/0_1     > tmp/0_1.out
+-	$(V) ./cl    < Matrix/0_1     > tmp/l_0_1.out
++	$(V) ./cm -m < Matrix/c30up   > /dev/null
++	$(V) ./cl -m < Matrix/c30up   > /dev/null
++	$(V) ./cm    < Matrix/pi      > /dev/null
++	$(V) ./cl    < Matrix/pi      > /dev/null
++	$(V) ./cm    < Matrix/cpi     > /dev/null
++	$(V) ./cl    < Matrix/cpi     > /dev/null
++	$(V) ./cm    < Matrix/1_0     > /dev/null
++	$(V) ./cl    < Matrix/1_0     > /dev/null
++	$(V) ./cm -s < Matrix/3b      > /dev/null
++	$(V) ./cl -s < Matrix/3b      > /dev/null
++	$(V) ./cm -s < Matrix/cza     > /dev/null
++	$(V) ./cl -s < Matrix/cza     > /dev/null
++	$(V) ./cm    < Matrix/0_1     > /dev/null
++	$(V) ./cl    < Matrix/0_1     > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm -n < Matrix/galenet > tmp/galenet_nan.out
++	$(V) ./cm -n < Matrix/galenet > /dev/null
+ 	- $(COVER)
+-	$(V) ./cl -n < Matrix/galenet > tmp/l_galenet_nan.out
++	$(V) ./cl -n < Matrix/galenet > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm    < Matrix/a1      > tmp/a1.out
++	$(V) ./cm    < Matrix/a1      > /dev/null
+ 	- $(COVER)
+-	$(V) ./cl    < Matrix/a1      > tmp/l_a1.out
++	$(V) ./cl    < Matrix/a1      > /dev/null
+ 	- $(COVER)
+-	$(V) ./cm    < Matrix/zero    > tmp/zero.out
+-	$(V) ./cl    < Matrix/zero    > tmp/zero.out
++	$(V) ./cm    < Matrix/zero    > /dev/null
++	$(V) ./cl    < Matrix/zero    > /dev/null
+ 	- $(COVER)
+ 
+ cov:
+@@ -920,9 +933,9 @@
+ 	$(C) -E $(I) $< | $(PRETTY) > z_camd.c
+ 	$(C) -c $(I) z_camd.c
+ 
+-z_metis.o: ../Partition/cholmod_metis.c
+-	$(C) -E $(I) $< | $(PRETTY) > z_metis.c
+-	$(C) -c $(I) z_metis.c
++#z_metis.o: ../Partition/cholmod_metis.c
++#	$(C) -E $(I) $< | $(PRETTY) > z_metis.c
++#	$(C) -c $(I) z_metis.c
+ 
+ z_nesdis.o: ../Partition/cholmod_nesdis.c
+ 	$(C) -E $(I) $< | $(PRETTY) > z_nesdis.c
+@@ -1134,9 +1147,9 @@
+ 	$(C) -DDLONG -E $(I) $< | $(PRETTY) > l_camd.c
+ 	$(C) -c $(I) l_camd.c
+ 
+-l_metis.o: ../Partition/cholmod_metis.c
+-	$(C) -DDLONG -E $(I) $< | $(PRETTY) > l_metis.c
+-	$(C) -c $(I) l_metis.c
++#l_metis.o: ../Partition/cholmod_metis.c
++#	$(C) -DDLONG -E $(I) $< | $(PRETTY) > l_metis.c
++#	$(C) -c $(I) l_metis.c
+ 
+ l_nesdis.o: ../Partition/cholmod_nesdis.c
+ 	$(C) -DDLONG -E $(I) $< | $(PRETTY) > l_nesdis.c
