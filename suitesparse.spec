@@ -1,6 +1,6 @@
 Name:           suitesparse
 Version:        3.4.0
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        A collection of sparse matrix libraries
 
 Group:          System Environment/Libraries
@@ -149,7 +149,7 @@ popd
 
 pushd CAMD
   pushd Lib
-    make CFLAGS="$RPM_OPT_FLAGS -fPIC" 
+    make CFLAGS="$RPM_OPT_FLAGS -fPIC"
   popd
   pushd ../Lib
     gcc -shared -Wl,-soname,libcamd.so.%{camd_version_major} -o \
@@ -164,7 +164,7 @@ popd
 
 pushd CCOLAMD
   pushd Lib
-    make CFLAGS="$RPM_OPT_FLAGS -fPIC" 
+    make CFLAGS="$RPM_OPT_FLAGS -fPIC"
   popd
   pushd ../Lib
     gcc -shared -Wl,-soname,libccolamd.so.%{ccolamd_version_major} -o \
@@ -289,7 +289,7 @@ popd
 
 pushd UMFPACK
   pushd Lib
-    make CFLAGS="$RPM_OPT_FLAGS -fPIC" 
+    make CFLAGS="$RPM_OPT_FLAGS -fPIC"
   popd
   pushd ../Lib
     gcc -shared -Wl,-soname,libumfpack.so.%{umfpack_version_major} -o \
@@ -341,7 +341,14 @@ pushd Include
     cp -a $f ${RPM_BUILD_ROOT}%{_includedir}/%{name}/$f
   done
 popd
-
+# resolves rhbz#902854
+mkdir -p license_texts
+pushd license_texts
+  for dir in {AMD,BTF,CAMD,CCOLAMD,COLAMD,CHOLMOD,CXSparse,KLU,LDL,SPQR,UMFPACK};  do
+    mkdir -p ${dir};
+    cp -r ../Doc/${dir}/{gpl.txt,lesser.txt,*License*} ${dir}/ 2>/dev/null || true;
+  done
+popd
 
 %check
 make cov
@@ -358,21 +365,31 @@ rm -rf ${RPM_BUILD_ROOT}
 %files
 %defattr(-,root,root)
 %{_libdir}/lib*.so.*
+# resolves rhbz#902854
+%doc license_texts/*
 
 %files devel
 %defattr(-,root,root)
 %{_includedir}/%{name}
 %{_libdir}/lib*.so
+# resolves rhbz#902854
+%doc license_texts/*
 
 %files static
 %defattr(-,root,root)
 %{_libdir}/lib*.a
+# resolves rhbz#902854
+%doc license_texts/*
 
 %files doc
 %defattr(-,root,root)
 %doc Doc/*
 
 %changelog
+* Tue Jun 11 2013 Tomas Tomecek <ttomecek@redhat.com> - 3.4.0-8
+- Add licenses to subpackages
+- Clean whitespace in spec file
+
 * Tue Dec 04 2012 Tomas Tomecek <ttomecek@redhat.com> - 3.4.0-7
 - Resolves: #883350
 - Add patch that enables Tcov test suite after build
@@ -426,7 +443,7 @@ rm -rf ${RPM_BUILD_ROOT}
 - New upstream version
 
 * Mon Mar  3 2008 Quentin Spencer <qspencer@users.sourceforge.net> 3.1.0-1
-- Update to release 3.1.0. 
+- Update to release 3.1.0.
 
 * Tue Feb 19 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 3.0.0-4
 - Autorebuild for GCC 4.3
