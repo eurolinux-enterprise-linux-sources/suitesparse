@@ -12,7 +12,7 @@
 
 Name:           suitesparse
 Version:        4.0.2
-Release:        10%{?dist}
+Release:        7%{?dist}
 Summary:        A collection of sparse matrix libraries
 
 Group:          System Environment/Libraries
@@ -30,9 +30,6 @@ BuildRequires:  atlas-devel
 BuildRequires:  tbb-devel
 %global with_tbb 1
 %endif
-
-BuildRequires:  hardlink
-
 Obsoletes:      umfpack <= 5.0.1
 Obsoletes:      ufsparse <= 2.1.1
 Provides:       ufsparse = %{version}-%{release}
@@ -392,19 +389,6 @@ pushd Include
   done
 popd
 
-# collect licenses in one place to ship as base package documentation
-rm -rf Licenses
-mkdir Licenses
-find */ -iname lesser.txt -o -iname license.txt -o -iname gpl.txt -o \
-    -iname license | while read f; do
-        b="${f%%/*}"
-        r="${f#$b}"
-        x="$(echo "$r" | sed 's|/doc/|/|gi')"
-        install -m0644 -D "$f" "./Licenses/$b/$x"
-    done
-
-# hardlink duplicate documentation files
-hardlink -cv Docs/ Licenses/
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
@@ -416,7 +400,6 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %files
 %defattr(-,root,root)
-%doc Licenses
 %{_libdir}/lib*.so.*
 
 %files devel
@@ -433,16 +416,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %doc Doc/*
 
 %changelog
-* Mon Feb 10 2014 Nils Philippsen <nils@redhat.com> - 4.0.2-10
-- ship licenses as documentation in the base package (#1019315)
-- hardlink duplicate documentation/license files
-
-* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 4.0.2-9
-- Mass rebuild 2014-01-24
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 4.0.2-8
-- Mass rebuild 2013-12-27
-
 * Fri Sep 20 2013 Nils Philippsen <nils@redhat.com> - 4.0.2-7
 - build against atlas 3.10.x
 
